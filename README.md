@@ -1,5 +1,5 @@
 # eos_nuclear
-A nuclear EoS wrapper to use the Nuclear EOS driver from [http://stellarcollapse.org](http://stellarcollapse.org).
+A nuclear EoS python wrapper to use the Nuclear EOS driver from [http://stellarcollapse.org](http://stellarcollapse.org).
 
 ## PRE-REQUIREMENTS
 
