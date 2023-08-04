@@ -26,7 +26,8 @@ python setup.py install
 
 ## Usage
 
-see examples in `./tests`
+Please see examples in `./tests`.
+The EoS table can be downloaded from [stellarcollapse.org](https://stellarcollapse.org/equationofstate.html).
 
 ```
 import numpy as np
@@ -79,3 +80,6 @@ print("###########################################")
 ## Acknowledgment 
 
 The fortran source codes are taken from [http://stellarcollapse.org](http://stellarcollapse.org).
+It can be downloaded from [here](https://stellarcollapse.org/equationofstate.html).
+
+If you use this python wrapper, please make reference to Evan O’Connor and Christian D. Ott, A New Spherically-Symmetric General Relativistic Hydrodynamics Code for Stellar Collapse to Neutron Stars and Black Holes, Class. Quant. Grav., 27 114103, 2010, and, of course, the original authors of the EOS.
