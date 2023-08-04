@@ -7,14 +7,18 @@
 
 import numpy as np
 import eospy
-#from . import eospy
+from dataclasses import dataclass
 
-EOSMODE_RHOE = 0   # coming in with rho, eps, ye   -> solve for temp
-EOSMODE_RHOT = 1   # coming in with rho, temp, ye
-EOSMODE_RHOS = 2   # coming in with rho, entr, ye  -> solve for temp
-EOSMODE_PT   = 3   # coming in with pres, temp, ye ->solve for rho
 MEV_TO_KELVIN = 1.1604447522806e10
 
+@dataclass
+class EOSMode:
+    RHOE = 0
+    RHOT = 1
+    RHOS = 2
+    PT   = 3
+
+@dataclass
 class EOSVariable(object):
     xrho=1.e10       # density [g/cm^3]
     xtemp=0.01       # temperautre [MeV]
@@ -47,6 +51,7 @@ class NuclearEOS():
         """
         eospy.init_table(table)
         self._get_energy_shift()
+        self.mode = EOSMode()
         return
     def __del__(self):
         print("deallocate eos talbe")
@@ -143,9 +148,9 @@ class NuclearEOS():
         var.xye   = ye
     
         if full:
-            var = self.nuc_eos_full(var,mode=EOSMODE_RHOT)
+            var = self.nuc_eos_full(var,mode=self.mode.RHOT)
         else:
-            var = self.nuc_eos_short(var,mode=EOSMODE_RHOT)
+            var = self.nuc_eos_short(var,mode=self.mode.RHOT)
 
         if var.error != 0:
             print("[d t y] Warning !!! eos.error is not 0")
@@ -173,9 +178,9 @@ class NuclearEOS():
         var.xye   = ye
     
         if full:
-            var = self.nuc_eos_full(var,mode=EOSMODE_RHOS)
+            var = self.nuc_eos_full(var,mode=self.mode.RHOS)
         else:
-            var = self.nuc_eos_short(var,mode=EOSMODE_RHOS)
+            var = self.nuc_eos_short(var,mode=self.mode.RHOS)
 
         if var.error != 0:
             print("[d s y] Warning !!! eos.error is not 0")
@@ -193,9 +198,9 @@ class NuclearEOS():
         var.xye   = ye
     
         if full:
-            var = self.nuc_eos_full(var,mode=EOSMODE_RHOE)
+            var = self.nuc_eos_full(var,mode=self.mode.RHOE)
         else:
-            var = self.nuc_eos_short(var,mode=EOSMODE_RHOE)
+            var = self.nuc_eos_short(var,mode=self.mode.RHOE)
 
         if var.error != 0:
             print("[d e y] Warning !!! eos.error is not 0")
@@ -213,9 +218,9 @@ class NuclearEOS():
         var.xye   = ye
     
         if full:
-            var = self.nuc_eos_full(var,mode=EOSMODE_PT)
+            var = self.nuc_eos_full(var,mode=self.mode.PT)
         else:
-            var = self.nuc_eos_short(var,mode=EOSMODE_PT)
+            var = self.nuc_eos_short(var,mode=self.mode.PT)
 
         if var.error != 0:
             print("[t p y] Warning !!! eos.error is not 0")
@@ -240,14 +245,15 @@ if __name__=='__main__':
     var.xtemp = 63.0
     var.xye = 0.2660725
 
+    mode = EOSMode()
 
-    var = neos.nuc_eos_short(var,mode=EOSMODE_RHOT)
+    var = neos.nuc_eos_short(var,mode=mode.RHOT)
     print("###########################################")
     print("Short EOS ---------------------------------")
     print(var.xrho,var.xtemp,var.xye)
     print(var.xenr,var.xprs,var.xent,np.sqrt(var.xcs2))
     print(var.xdedt,var.xdpdrhoe,var.xdpderho)
-    var = neos.nuc_eos_full(var,mode=EOSMODE_RHOT)
+    var = neos.nuc_eos_full(var,mode=mode.RHOT)
     print("###########################################")
     print("Full EOS ----------------------------------")
     print(var.xrho,var.xtemp,var.xye)
@@ -258,7 +264,7 @@ if __name__=='__main__':
     print(var.xmu_e,var.xmu_p,var.xmu_n,var.xmuhat)
 
     var.xtemp = 2.0*var.xtemp
-    var = neos.nuc_eos_full(var,mode=EOSMODE_RHOE)
+    var = neos.nuc_eos_full(var,mode=mode.RHOE)
     print("###########################################")
     print("Full EOS ----------------------------------")
     print(var.xrho,var.xtemp,var.xye)

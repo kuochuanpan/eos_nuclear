@@ -1,5 +1,4 @@
 from eos_nuclear.NuclearEos import (
-    NuclearEOS, EOSVariable, 
-    EOSMODE_RHOS, EOSMODE_RHOE, EOSMODE_RHOT, EOSMODE_PT, 
+    NuclearEOS, EOSVariable, EOSMode, 
     MEV_TO_KELVIN
 )
