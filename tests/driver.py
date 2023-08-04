@@ -1,34 +1,3 @@
-# eos_nuclear
-A nuclear EoS wrapper to use the Nuclear EOS driver from [http://stellarcollapse.org](http://stellarcollapse.org).
-
-## PRE-REQUIREMENTS
-
-* `python3`
-* `numpy` (f2py is now included in `numpy`)
-* `gfortran`
-* `hdf5` 
-
-## Installation
-
-1. Edit the `make.inc` in `./eos_nuclear/src/make.inc`
-2. Make sure you have FFLAGS ```-fPIC```
-3. Compile the Fortran source codes by `make`
-4. Generate the python module using `f2py`:
-
-for example, 
-```
-f2py3 -m eospy -c eospy.F90 nuc_eos.a -I/cluster/software/hdf5-parallel/1.8.21/gcc--8.3.0/openmpi--3.1.4/include -L/cluster/software/hdf5-parallel/1.8.21/gcc--8.3.0/openmpi--3.1.4/lib -lhdf5 -lhdf5_fortran -lhdf5 -lz
-```
-5. Run 
-```
-python setup.py install
-```
-
-## Usage
-
-see examples in `./tests`
-
-```
 import numpy as np
 import eos_nuclear as ne
 
@@ -74,8 +43,3 @@ print(var.xmu_e,var.xmu_p,var.xmu_n,var.xmuhat)
 print("###########################################")
 
 
-```
-
-## Acknowledgment 
-
-The fortran source codes are taken from [http://stellarcollapse.org](http://stellarcollapse.org).

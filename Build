@@ -1,0 +1,11 @@
+(yt) ➜  eos git:(master) ✗ module list
+Currently Loaded Modulefiles:
+ 1) gcc/8.3.0   2) openmpi/3.1.4   3) hdf5-parallel/1.8.21   4) python/3.7_conda(default)
+
+
+might be necessary
+(export NPY_DISTUTILS_APPEND_FLAGS=1)
+
+f2py3 -m eospy -c eospy.F90 nuc_eos.a -I/cluster/software/hdf5-parallel/1.8.21/gcc--8.3.0/openmpi--3.1.4/include -L/cluster/software/hdf5-parallel/1.8.21/gcc--8.3.0/openmpi--3.1.4/lib -lhdf5 -lhdf5_fortran -lhdf5 -lz
+
+

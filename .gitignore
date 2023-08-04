@@ -1,0 +1,11 @@
+dist
+build
+eos_nuclear.egg-info/
+*/*/*.o
+*/*/*.a
+*/*/*.mod
+*/*/*.so
+*/*.h5
+*/src/ccsn_test
+*/src/driver
+*/src/one_zone
