@@ -13,6 +13,7 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     packages=find_packages(),
+    package_data={'yt_flash': ['src/eospy.so']},
     install_requires=['numpy', 'scipy', 'h5py'],
     keywords=['python', 'eos', 'nuclear'],
     classifiers=[
