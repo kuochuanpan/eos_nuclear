@@ -12,7 +12,8 @@ EXTRADEPS=
 
 MODINC=$(HDF5INCS)
 
-all: nuc_eos.a driver onezone ccsn_test
+all: nuc_eos.a libnuc_eos.dylib driver onezone ccsn_test
+
 
 onezone: nuc_eos.a one_zone.F90
 	$(F90) $(F90FLAGS) -o one_zone one_zone.F90 nuc_eos.a $(HDF5LIBS)
@@ -25,6 +26,9 @@ ccsn_test: nuc_eos.a driver.F90
 
 nuc_eos.a: $(OBJECTS) $(FOBJECTS)
 	ar r nuc_eos.a *.o
+
+libnuc_eos.dylib: $(OBJECTS) $(FOBJECTS)
+	$(F90) -dynamiclib -o libnuc_eos.dylib *.o $(HDF5LIBS)
 
 $(OBJECTS): %.o: %.F90 $(EXTRADEPS)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) -c $< -o $@

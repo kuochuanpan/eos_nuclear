@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 DESCRIPTION = 'A python wrapper for the nuclear EoS table'
 LONG_DESCRIPTION = 'A python wrapper for the nuclear EoS table'
 
@@ -13,7 +13,9 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     packages=find_packages(),
-    package_data={'yt_flash': ['src/eospy.so']},
+    include_package_data=True,
+    package_data={'eos_nuclear': ['src/eospy*.so']},
+    zip_safe=False,
     install_requires=['numpy', 'scipy', 'h5py'],
     keywords=['python', 'eos', 'nuclear'],
     classifiers=[

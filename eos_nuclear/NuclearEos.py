@@ -6,7 +6,7 @@
 # March 7th, 2016
 
 import numpy as np
-import eospy
+from .src import eospy
 from dataclasses import dataclass
 
 MEV_TO_KELVIN = 1.1604447522806e10
@@ -55,7 +55,7 @@ class NuclearEOS():
         return
     def __del__(self):
         print("deallocate eos talbe")
-        eospy.del_table()
+        #eospy.del_table()
         return
         
     def _get_energy_shift(self):
