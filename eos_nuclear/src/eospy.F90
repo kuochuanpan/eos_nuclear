@@ -101,6 +101,89 @@ subroutine get_eint(xrho,xye,xtemp,xenr)
     xenr = xenr + energy_shift
 end subroutine get_eint
 
+!---------------------------------------------------------------------------
+! Batch version of eos_short: process N points in one call
+! OpenMP parallelized for performance
+!
+subroutine eos_short_batch(n,xrho,xtemp,xye,xenr,xprs,xent,xcs2,xzdedt,&
+        xdpderho,xdpdrhoe,xmunu,keytemp,keyerr)
+
+    use eosmodule, only : precision
+    implicit none
+    integer, intent(in) :: n
+    real*8, dimension(n), intent(in)    :: xye
+    real*8, dimension(n), intent(inout) :: xrho,xtemp,xenr,xent,xprs
+    real*8, dimension(n), intent(out)   :: xmunu,xcs2,xzdedt
+    real*8, dimension(n), intent(out)   :: xdpderho,xdpdrhoe
+    integer, intent(in)   :: keytemp
+    integer, dimension(n), intent(out)  :: keyerr
+
+!f2py intent(in) n, keytemp
+!f2py intent(in) xye
+!f2py intent(in,out) xrho, xtemp, xenr, xent, xprs
+!f2py intent(out) xcs2, xzdedt, xdpderho, xdpdrhoe, xmunu, keyerr
+!f2py depend(n) xrho, xtemp, xye, xenr, xprs, xent
+!f2py depend(n) xcs2, xzdedt, xdpderho, xdpdrhoe, xmunu, keyerr
+
+    integer :: i
+
+    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(i) SCHEDULE(dynamic, 64)
+    do i = 1, n
+        call nuc_eos_short(xrho(i),xtemp(i),xye(i),xenr(i),xprs(i),&
+             xent(i),xcs2(i),xzdedt(i),xdpderho(i),xdpdrhoe(i),&
+             xmunu(i),keytemp,keyerr(i),precision)
+    end do
+    !$OMP END PARALLEL DO
+
+end subroutine eos_short_batch
+
+!---------------------------------------------------------------------------
+! Batch version of eos_full: process N points in one call
+! OpenMP parallelized for performance
+!
+subroutine eos_full_batch(n,xrho,xtemp,xye,xenr,xprs,xent,xcs2,xdedt,&
+        xdpderho,xdpdrhoe,xxa,xxh,xxn,xxp,xabar,xzbar,xmu_e,xmu_n,xmu_p, &
+        xmuhat,keytemp,keyerr)
+
+    use eosmodule, only : precision
+    implicit none
+    integer, intent(in) :: n
+    real*8, dimension(n), intent(in)    :: xye
+    real*8, dimension(n), intent(inout) :: xrho,xtemp,xenr,xent,xprs
+    real*8, dimension(n), intent(out)   :: xcs2,xdedt
+    real*8, dimension(n), intent(out)   :: xdpderho,xdpdrhoe,xxa,xxh,xxn,xxp
+    real*8, dimension(n), intent(out)   :: xabar,xzbar,xmu_e,xmu_n,xmu_p,xmuhat
+    integer, intent(in)   :: keytemp
+    integer, dimension(n), intent(out)  :: keyerr
+
+!f2py intent(in) n, keytemp
+!f2py intent(in) xye
+!f2py intent(in,out) xrho, xtemp, xenr, xent, xprs
+!f2py intent(out) xcs2, xdedt, xdpderho, xdpdrhoe
+!f2py intent(out) xxa, xxh, xxn, xxp, xabar, xzbar
+!f2py intent(out) xmu_e, xmu_n, xmu_p, xmuhat, keyerr
+!f2py depend(n) xrho, xtemp, xye, xenr, xprs, xent
+!f2py depend(n) xcs2, xdedt, xdpderho, xdpdrhoe
+!f2py depend(n) xxa, xxh, xxn, xxp, xabar, xzbar
+!f2py depend(n) xmu_e, xmu_n, xmu_p, xmuhat, keyerr
+
+    integer :: i
+
+    !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(i) SCHEDULE(dynamic, 64)
+    do i = 1, n
+        call nuc_eos_full(xrho(i),xtemp(i),xye(i),xenr(i),xprs(i),&
+             xent(i),xcs2(i),xdedt(i),xdpderho(i),xdpdrhoe(i),&
+             xxa(i),xxh(i),xxn(i),xxp(i),xabar(i),xzbar(i),&
+             xmu_e(i),xmu_n(i),xmu_p(i),xmuhat(i),&
+             keytemp,keyerr(i),precision)
+    end do
+    !$OMP END PARALLEL DO
+
+end subroutine eos_full_batch
+
+
+!---------------------------------------------------------------------------
+
 subroutine get_boundaries(dmin,dmax,tmin,tmax,ymin,ymax)
     use eosmodule
     implicit none
