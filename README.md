@@ -1,151 +1,140 @@
 # eos_nuclear
-A nuclear EoS python wrapper to use the Nuclear EOS driver from [http://stellarcollapse.org](http://stellarcollapse.org).
 
-## PRE-REQUIREMENTS
+A Python wrapper for the nuclear equation of state (EOS) table driver from [stellarcollapse.org](http://stellarcollapse.org).
 
-* `python3`
-* `numpy` (f2py is now included in `numpy`)
-* `gfortran`
-* `hdf5` 
+## Prerequisites
+
+- Python >= 3.9
+- `gfortran`
+- HDF5 (with Fortran bindings, discoverable via `pkg-config`)
+- `numpy >= 1.26`
+
+### macOS (Homebrew)
+
+```bash
+brew install gcc hdf5
+```
+
+### Ubuntu / Debian
+
+```bash
+sudo apt install gfortran libhdf5-dev pkg-config
+```
+
+### HPC Clusters
+
+Load the appropriate modules, e.g.:
+
+```bash
+module load gcc openmpi hdf5
+```
+
+Make sure `pkg-config` can find HDF5:
+
+```bash
+pkg-config --libs hdf5_fortran   # should print -lhdf5_fortran -lhdf5 ...
+```
+
+If HDF5 is not in the default pkg-config path, set:
+
+```bash
+export PKG_CONFIG_PATH=/path/to/hdf5/lib/pkgconfig:$PKG_CONFIG_PATH
+```
 
 ## Installation
 
-1. Edit the `make.inc` in `./eos_nuclear/src/make.inc`
-2. Make sure you have FFLAGS ```-fPIC```
+### From GitHub (recommended)
 
- > Note: If you are using the cica cluster, you need to load these modules\
- > `module load python`\
- > `module load gcc`\
- > `module load openmpi`\
- > `module load hdf5-parallel/1.8.21`
-   
-3. Compile the Fortran source codes by `make`
-4. Generate the python module using `f2py`:
-
-for example, 
-```
-f2py3 -m eospy -c eospy.F90 nuc_eos.a -I/cluster/software/hdf5-parallel/1.8.21/gcc--8.3.0/openmpi--3.1.4/include -L/cluster/software/hdf5-parallel/1.8.21/gcc--8.3.0/openmpi--3.1.4/lib -lhdf5 -lhdf5_fortran -lhdf5 -lz
+```bash
+pip install git+https://github.com/kuochuanpan/eos_nuclear.git
 ```
 
-or
+### From a local clone
 
-```
-f2py -m eospy -c eospy.F90 eosmodule.F90 nuc_eos.a -I. -I${HDF5_INCLUDE_PATH}/include -L${HDF5_LIB_PATH}/lib -lhdf5 -lhdf5_fortran -lz
-```
-
-or 
-
-```
-f2py -m eospy -c eospy.F90 eosmodule.F90 -I. -I${HDF5_INCLUDE_PATH}/include -L${HDF5_LIB_PATH}/lib -lhdf5 -lhdf5_fortran -lz -L$(pwd) -lnuc_eos --f90flags="-fallow-argument-mismatch" --opt="-Wl,-rpath,."
-```
-
-however, if you use this way, you have to add the DYLIB path in your shell
-
-```
-export DYLD_LIBRARY_PATH=/path/to/libnuc_eos.dylib:$DYLD_LIBRARY_PATH
-```
-
-5. `f2py` will create a file named `eospy.cpython.xxx.so`,link it to `eospy.so`.
-
-```
-ln -s eospy.cpython-312-darwin.so eospy.so
-```
-
-6. cd to the root folder and run 
-```
-python setup.py install
-```
-
-or
-
-```
+```bash
+git clone https://github.com/kuochuanpan/eos_nuclear.git
+cd eos_nuclear
 pip install .
+```
+
+### Editable install (for development)
+
+```bash
+pip install --no-build-isolation -e .
 ```
 
 ## Uninstall
 
-Run
-
-```
+```bash
 pip uninstall eos_nuclear
 ```
 
 ## Usage
 
-Please see examples in `./tests`.
-The EoS table can be downloaded from [stellarcollapse.org](https://stellarcollapse.org/equationofstate.html).
+Download an EOS table in HDF5 format from [stellarcollapse.org](https://stellarcollapse.org/equationofstate.html).
 
-```
+```python
 import numpy as np
 from eos_nuclear import NuclearEOS, EOSVariable, EOSMode
 
-#
-# Reproduce the results of driver.F90 in EOSDriver
-#
-
-table="SFHo.h5"
+# Load EOS table
+table = "SFHo.h5"
 neos = NuclearEOS(table)
 
+# Set thermodynamic state
 var = EOSVariable()
-var.xrho = 10.0**14.74994
-var.xtemp = 63.0
-var.xye = 0.2660725
+var.xrho = 10.0**14.74994   # density [g/cm^3]
+var.xtemp = 63.0             # temperature [MeV]
+var.xye = 0.2660725          # electron fraction
 
 mode = EOSMode()
 
-var = neos.nuc_eos_short(var,mode=1)
-print("###########################################")
-print( "Short EOS ---------------------------------")
-print(var.xrho,var.xtemp,var.xye)
-print(var.xenr,var.xprs,var.xent,np.sqrt(var.xcs2))
-print(var.xdedt,var.xdpdrhoe,var.xdpderho)
-var = neos.nuc_eos_full(var,mode=mode.RHOT)
-print("###########################################")
-print("Full EOS ----------------------------------")
-print(var.xrho,var.xtemp,var.xye)
-print(var.xenr,var.xprs,var.xent,np.sqrt(var.xcs2))
-print(var.xdedt,var.xdpdrhoe,var.xdpderho)
-print(var.xabar,var.xzbar)
-print(var.xxa,var.xxh,var.xxn,var.xxp)
-print(var.xmu_e,var.xmu_p,var.xmu_n,var.xmuhat)
+# Short EOS call (basic thermodynamic quantities)
+var = neos.nuc_eos_short(var, mode=mode.RHOT)
+print(f"P = {var.xprs:.6e} dyne/cm^2")
+print(f"s = {var.xent:.6f} kB/baryon")
+print(f"cs = {np.sqrt(var.xcs2):.6e} cm/s")
 
-var.xtemp = 2.0*var.xtemp
-var = neos.nuc_eos_full(var,mode=mode.RHOE)
-print("###########################################")
-print("Full EOS ----------------------------------")
-print(var.xrho,var.xtemp,var.xye)
-print(var.xenr,var.xprs,var.xent,np.sqrt(var.xcs2))
-print(var.xdedt,var.xdpdrhoe,var.xdpderho)
-print(var.xabar,var.xzbar)
-print(var.xxa,var.xxh,var.xxn,var.xxp)
-print(var.xmu_e,var.xmu_p,var.xmu_n,var.xmuhat)
-print("###########################################")
-
-
-
+# Full EOS call (includes composition and chemical potentials)
+var = neos.nuc_eos_full(var, mode=mode.RHOT)
+print(f"Xn = {var.xxn:.6f}, Xp = {var.xxp:.6f}")
+print(f"mu_e = {var.xmu_e:.3f} MeV")
 ```
 
-## Example
+### EOS Modes
 
-On CICA cluster
+| Mode | Description |
+|------|-------------|
+| `EOSMode.RHOT` | Input: density, temperature, Ye |
+| `EOSMode.RHOE` | Input: density, energy, Ye (solve for temperature) |
+| `EOSMode.RHOS` | Input: density, entropy, Ye (solve for temperature) |
+| `EOSMode.PT`   | Input: pressure, temperature, Ye (solve for density) |
 
+### Convenience Methods
+
+```python
+# From density [g/cm³], temperature [K], and Ye
+var = neos.getEOSfromRhoTempYe(rho=1e12, temp=1e10, ye=0.3)
+
+# From density, entropy [kB/baryon], and Ye
+var = neos.getEOSfromRhoEntrYe(rho=1e12, entr=5.0, ye=0.3)
+
+# From density, energy [erg/g], and Ye
+var = neos.getEOSfromRhoEnerYe(rho=1e12, ener=1e20, ye=0.3)
 ```
-Currently Loaded Modulefiles:
- 1) gcc/8.3.0   2) openmpi/3.1.4   3) hdf5-parallel/1.8.21   4) python/3.7_conda(default)
-```
 
-might be necessary
-```
-export NPY_DISTUTILS_APPEND_FLAGS=1
-```
+See `tests/driver.py` for a complete example.
 
-```
-f2py3 -m eospy -c eospy.F90 nuc_eos.a -I/cluster/software/hdf5-parallel/1.8.21/gcc--8.3.0/openmpi--3.1.4/include -L/cluster/software/hdf5-parallel/1.8.21/gcc--8.3.0/openmpi--3.1.4/lib -lhdf5 -lhdf5_fortran -lhdf5 -lz
-```
+## Build System
 
-## Acknowledgment 
+This package uses [meson-python](https://meson-python.readthedocs.io/) to compile the Fortran EOS routines via `f2py` at install time. No manual compilation or `make` steps required — `pip install` handles everything.
 
-The fortran source codes are taken from [http://stellarcollapse.org](http://stellarcollapse.org).
-It can be downloaded from [here](https://stellarcollapse.org/equationofstate.html).
+## Acknowledgment
 
-If you use this python wrapper, please make reference to Evan O’Connor and Christian D. Ott, A New Spherically-Symmetric General Relativistic Hydrodynamics Code for Stellar Collapse to Neutron Stars and Black Holes, Class. Quant. Grav., 27 114103, 2010, and, of course, the original authors of the EOS.
+The Fortran source codes are taken from [stellarcollapse.org](http://stellarcollapse.org) and can be downloaded [here](https://stellarcollapse.org/equationofstate.html).
+
+If you use this Python wrapper, please cite:
+
+> E. O'Connor and C. D. Ott, *A New Spherically-Symmetric General Relativistic Hydrodynamics Code for Stellar Collapse to Neutron Stars and Black Holes*, Class. Quant. Grav., **27**, 114103, 2010.
+
+and the original authors of the EOS table you use.
