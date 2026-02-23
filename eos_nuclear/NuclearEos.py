@@ -128,6 +128,76 @@ class NuclearEOS():
 
         return variable
 
+    def nuc_eos_short_batch(self, rho, temp, ye, enr=None, prs=None, ent=None, mode=1):
+        """
+        Batch EOS call (short) for N points. Fortran-side loop with OpenMP.
+
+        Parameters
+        ----------
+        rho, temp, ye : array_like, shape (N,)
+            Density [g/cm^3], temperature [MeV], electron fraction.
+        enr, prs, ent : array_like or None
+            Energy [erg/g], pressure [dyne/cm^2], entropy [kB/baryon].
+            Required depending on mode; unused inputs can be None (defaults to 0).
+        mode : int
+            EOS mode (0=RHOE, 1=RHOT, 2=RHOS, 3=PT).
+
+        Returns
+        -------
+        dict of numpy arrays with keys:
+            rho, temp, enr, prs, ent, cs2, dedt, dpderho, dpdrhoe, munu, error
+        """
+        rho  = np.ascontiguousarray(rho, dtype=np.float64)
+        temp = np.ascontiguousarray(temp, dtype=np.float64)
+        ye   = np.ascontiguousarray(ye, dtype=np.float64)
+        n = len(rho)
+        enr = np.zeros(n) if enr is None else np.ascontiguousarray(enr, dtype=np.float64)
+        prs = np.zeros(n) if prs is None else np.ascontiguousarray(prs, dtype=np.float64)
+        ent = np.zeros(n) if ent is None else np.ascontiguousarray(ent, dtype=np.float64)
+
+        out = eospy.eos_short_batch(n, rho, temp, ye, enr, prs, ent, keytemp=mode)
+        return {
+            'rho': out[0], 'temp': out[1], 'enr': out[2],
+            'prs': out[3], 'ent': out[4], 'cs2': out[5],
+            'dedt': out[6], 'dpderho': out[7], 'dpdrhoe': out[8],
+            'munu': out[9], 'error': out[10],
+        }
+
+    def nuc_eos_full_batch(self, rho, temp, ye, enr=None, prs=None, ent=None, mode=1):
+        """
+        Batch EOS call (full) for N points. Fortran-side loop with OpenMP.
+
+        Parameters
+        ----------
+        rho, temp, ye : array_like, shape (N,)
+        enr, prs, ent : array_like or None
+        mode : int
+
+        Returns
+        -------
+        dict of numpy arrays with keys:
+            rho, temp, enr, prs, ent, cs2, dedt, dpderho, dpdrhoe,
+            xa, xh, xn, xp, abar, zbar, mu_e, mu_n, mu_p, muhat, error
+        """
+        rho  = np.ascontiguousarray(rho, dtype=np.float64)
+        temp = np.ascontiguousarray(temp, dtype=np.float64)
+        ye   = np.ascontiguousarray(ye, dtype=np.float64)
+        n = len(rho)
+        enr = np.zeros(n) if enr is None else np.ascontiguousarray(enr, dtype=np.float64)
+        prs = np.zeros(n) if prs is None else np.ascontiguousarray(prs, dtype=np.float64)
+        ent = np.zeros(n) if ent is None else np.ascontiguousarray(ent, dtype=np.float64)
+
+        out = eospy.eos_full_batch(n, rho, temp, ye, enr, prs, ent, keytemp=mode)
+        return {
+            'rho': out[0], 'temp': out[1], 'enr': out[2],
+            'prs': out[3], 'ent': out[4], 'cs2': out[5],
+            'dedt': out[6], 'dpderho': out[7], 'dpdrhoe': out[8],
+            'xa': out[9], 'xh': out[10], 'xn': out[11], 'xp': out[12],
+            'abar': out[13], 'zbar': out[14],
+            'mu_e': out[15], 'mu_n': out[16], 'mu_p': out[17], 'muhat': out[18],
+            'error': out[19],
+        }
+
     def getEOSfromRhoTempYe(self,rho,temp, ye, full=False):
         """
         get Eos variable from density (g/cm^3), temperature (K), and Ye

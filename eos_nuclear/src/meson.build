@@ -1,6 +1,20 @@
 # Find dependencies
 hdf5_dep = dependency('hdf5', language: 'fortran', required: true)
 
+# Check for OpenMP (Fortran only — avoid passing -fopenmp to Apple clang)
+fc = meson.get_compiler('fortran')
+has_openmp = fc.has_argument('-fopenmp')
+omp_fortran_args = has_openmp ? ['-fopenmp'] : []
+
+# Find libgomp for linking (works with clang linker)
+omp_link_args = []
+if has_openmp
+  gomp = fc.find_library('gomp', required: false)
+  if gomp.found()
+    omp_link_args = ['-lgomp']
+  endif
+endif
+
 # NumPy include dirs (for f2py headers)
 incdir_numpy = run_command(py,
   ['-c', 'import numpy; print(numpy.get_include())'],
@@ -52,7 +66,8 @@ py.extension_module(
   include_directories: [incdir_numpy, incdir_f2py],
   subdir: 'eos_nuclear/src',
   install: true,
-  fortran_args: ['-fPIC', '-O2'],
+  fortran_args: ['-fPIC', '-O2'] + omp_fortran_args,
+  link_args: omp_link_args,
 )
 
 # Install the __init__.py for the src subpackage
