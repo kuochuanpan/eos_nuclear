@@ -125,6 +125,52 @@ var = neos.getEOSfromRhoEnerYe(rho=1e12, ener=1e20, ye=0.3)
 
 See `tests/driver.py` for a complete example.
 
+### Batch Calls (Vectorized)
+
+For processing many points at once (e.g., post-processing simulation data), use the batch methods. These run a Fortran-side loop with OpenMP parallelization — **~30x faster** than a Python loop.
+
+```python
+import numpy as np
+from eos_nuclear import NuclearEOS, EOSMode
+
+neos = NuclearEOS("SFHo.h5")
+mode = EOSMode()
+
+# 1 million points at once
+rho  = np.logspace(10, 15, 1_000_000)   # g/cm^3
+temp = np.full_like(rho, 10.0)          # MeV
+ye   = np.full_like(rho, 0.3)
+
+# Short EOS (thermodynamic quantities)
+result = neos.nuc_eos_short_batch(rho, temp, ye, mode=mode.RHOT)
+print(result['prs'])    # pressure array
+print(result['ent'])    # entropy array
+print(result['cs2'])    # sound speed squared array
+
+# Full EOS (includes composition + chemical potentials)
+result = neos.nuc_eos_full_batch(rho, temp, ye, mode=mode.RHOT)
+print(result['xn'])     # neutron fraction
+print(result['mu_e'])   # electron chemical potential
+```
+
+For iterative modes (RHOE, RHOS), pass the relevant quantity:
+
+```python
+# Solve for temperature given energy
+result = neos.nuc_eos_short_batch(
+    rho, trial_temp, ye,
+    enr=energy_array,      # energy [erg/g]
+    mode=mode.RHOE,
+)
+print(result['temp'])  # solved temperatures
+```
+
+**Return keys:**
+- `nuc_eos_short_batch`: `rho`, `temp`, `enr`, `prs`, `ent`, `cs2`, `dedt`, `dpderho`, `dpdrhoe`, `munu`, `error`
+- `nuc_eos_full_batch`: all of the above (except `munu`) plus `xa`, `xh`, `xn`, `xp`, `abar`, `zbar`, `mu_e`, `mu_n`, `mu_p`, `muhat`
+
+See `tests/test_batch.py` for correctness tests and benchmarks.
+
 ## Build System
 
 This package uses [meson-python](https://meson-python.readthedocs.io/) to compile the Fortran EOS routines via `f2py` at install time. No manual compilation or `make` steps required — `pip install` handles everything.
